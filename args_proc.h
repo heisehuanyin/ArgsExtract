@@ -9,6 +9,7 @@
     (utilities).args_accept(argc, argv); \
     } catch (args_extra::args_ex* e) { \
     std::cout << e->type() << " :: " << e->reason() << std::endl; \
+    exit(0);\
     }
 
 namespace args_extra {
@@ -86,14 +87,15 @@ namespace args_extra {
 
         virtual std::list<std::string> else_args();
 
-        virtual std::string help_string(){}
+        virtual std::string help_string();
 
     private:
         const std::string cmd_name;
         const std::string cmd_detial;
         std::string cmd_description;
         std::list<ArgsGroup> opts_table;
-        std::list<std::string> args_list;
+
+        std::list<std::pair<std::string,std::string>> args_pairs;
         std::list<std::string> args_left;
     };
 

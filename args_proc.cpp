@@ -17,11 +17,16 @@ void posix::set_opts_short(const std::initializer_list<ArgsGroup> &list)
 {
     for (auto itor=list.begin();itor!=list.end();++itor) {
         auto item = *itor;
+        if (item.opt.find("-")==0){
+            auto r = new args_ex("选项参数设计错误");
+            r->set_detial("选项设计错误，夹带“-”标识。option<"+item.opt+">");
+            throw r;
+        }
 
         for (auto ext:opts_table) {
             if(ext.opt == item.opt){
-                auto r = new args_ex("选项开关设计错误");
-                r->set_detial("开关设计与已知重复。opt<"+ext.opt+">");
+                auto r = new args_ex("选项参数设计错误");
+                r->set_detial("选项设计与已知选项重复。option<"+ext.opt+">");
                 throw r;
             }
         }
@@ -32,51 +37,79 @@ void posix::set_opts_short(const std::initializer_list<ArgsGroup> &list)
 
 void posix::args_accept(int argc, char *argv[])
 {
-    for (int i=0;i<argc;++i) {
-        string arg = argv[i];
+    for (int args_i=1; args_i<argc; ++args_i) {
+        string item = argv[args_i];
 
-        /*
-         * 检测此参数是否为开关
-         */
-        if(arg.find("-")==0 && arg.size()>1) {
-            bool need_suply = false;
+        if (item.size()>1 && item.find("-")==0 && item.find("--")==string::npos){
+            int suply_count = 0;
 
-            /*
-             * 逐个检测开关参数合法性
-             */
-            for(unsigned long i=1; i<arg.size(); i++){
-                char cc = arg[i];
+            for (unsigned long char_i=1; char_i < item.size(); ++char_i) {
+                char single_switch = item[char_i];
 
                 auto itor=opts_table.begin();
-                for (;itor!=opts_table.end();itor++) {
-                    if((*itor).opt.find(cc)==0)
+                for (; itor!=opts_table.end(); ++itor) {
+
+                    if ((*itor).opt.find(single_switch)==0){
+                        if ((*itor)._placeholder!="") {
+                            suply_count++;
+                        }
+
                         break;
+                    }
                 }
-                if (itor == opts_table.end()) {
-                    auto r = new args_ex("参数输入错误");
-                    r->set_detial(string("输入参数命令开关错误，出现未定义开关。opt<").append(&cc) +">");
+                if (itor == opts_table.end()){
+                    auto r = new args_ex("输入参数错误");
+                    r->set_detial(string("未知参数选项，option<").append(&single_switch) + ">");
                     throw r;
+                }
+
+                if (suply_count > 1){
+                    auto e = new args_ex("输入参数错误");
+                    e->set_detial("多个补参选项错误结合,option<"+item+">");
+                    throw e;
+                }else if (suply_count == 1) {
+                    if (args_i < argc-1) {
+                        string suply_item = argv[args_i+1];
+                        if(suply_item.find("-")!=0){
+                            args_pairs.push_back(std::make_pair(string().append(&single_switch), suply_item));
+                            args_i++;
+                            continue;
+                        }
+                    }
+                    auto e = new args_ex("输入参数错误");
+                    e->set_detial(string("选项缺少补充参数，option<").append(&single_switch)+">");
+                    throw e;
+
+                }else {
+                    args_pairs.push_back(std::make_pair(string().append(&single_switch),""));
                 }
             }
         }
-
-        args_list.push_back(arg);
+        else {
+            args_left.push_back(item);
+        }
     }
 }
 
 std::list<std::string> posix::else_args() {
-    std::list<std::string> rlist;
+    return args_left;
+}
 
-    for (auto itor=args_list.begin();itor!=args_list.end();++itor) {
-        if((*itor).find("-")==0){
-            ++itor;
-            continue;
+std::string posix::help_string() {
+    std::string help_doc = "Name:\t"+cmd_name + " -- " + cmd_detial + "\n";
+    help_doc += "Usage:\t" + cmd_name + " [-";
+
+    std::string temp = "";
+    for (auto it=opts_table.begin(); it!=opts_table.end(); ++it) {
+        if ((*it)._placeholder == "") {
+            help_doc += (*it).opt;
         }
-
-        rlist.push_back(*itor);
+        else{
+            temp += "[-" + (*it).opt + " " + (*it)._placeholder + " ] ";
+        }
     }
-
-    return rlist;
+    help_doc += "] " + temp;
+    return help_doc;
 }
 
 
