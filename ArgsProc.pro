@@ -4,8 +4,8 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += \
-        args_proc.cpp \
+        args_parse.cpp \
         main.cpp
 
 HEADERS += \
-    args_proc.h
+    args_parse.h
