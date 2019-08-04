@@ -33,5 +33,7 @@ int main(int argc, char* argv[])
     k = utool.get_option({"pppp"},v);
     std::cout << k << ":" << v << std::endl;
 
+    std::cout << utool.help_doc() << endl;
+
     return 0;
 }

@@ -6,6 +6,7 @@ A simple args-extract library. It is more convenients then getopt and getopt_lon
     使用前先填写一些参数，这些参数会用于后期帮助等文档的自动生成。
 
     使用前先填写执行程序名称，和对名称的解释
+    提供两种参数处理posix和gnu
     args_extra::gnu utool("extra","提取命令行参数测试程序");
 
     设置程序关注的短选项（posix类型），{“短选项”，“是否需要补充参数，如果不需要则留空”，“选项和参数的解释”}
@@ -38,6 +39,50 @@ A simple args-extract library. It is more convenients then getopt and getopt_lon
     string k,v;
     k = utool.get_option({"pppp"},v);
     std::cout << k << ":" << v << std::endl;
+    
+    获取自动生成的help-doc
+    std::cout << utool.help_doc() << endl;
 
     return 0;
+```
+## help-doc format
+```
+NAME:
+	extra -- 提取命令行参数测试程序
+
+USAGE:
+	extra [-aw] [-h somefile] [somefile] [a-few-message] [--help] [--vesion] [--pick filename] [--pppp aldkfjdslkfjskdfjlskf] 
+
+DESCRIPTION:
+	NONE.
+
+OPTIONS:
+	-a
+		处理所有文件
+
+	-h somefile
+		显示帮助信息
+
+	-w
+		结尾计算辅助
+
+	somefile
+		adkfjlakdfj
+
+	a-few-message
+		adkfjlakdfj
+
+	--help
+		显示帮助信息
+
+	--vesion
+		显示版本信息
+
+	--pick filename
+		测试pholder参数显示
+
+	--pppp aldkfjdslkfjskdfjlskf
+		akjflaskjflakjflkjflaksjflkjflkjajf
+
+
 ```
