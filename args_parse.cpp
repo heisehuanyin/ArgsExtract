@@ -5,50 +5,50 @@ using namespace args_extra;
 using std::string;
 
 
-args_ex::args_ex(const string &type)
-    :indicator(type){}
+ex_base::ex_base(const string &type)
+    :_type(type){}
 
-string args_ex::type(){
-    return indicator;
+const std::string &ex_base::type(){
+    return _type;
 }
 
-void args_ex::set_detial(const string &reason){
-    this->detial = reason;
+void ex_base::setDescription(const string &reason){
+    this->_description = reason;
 }
 
-string args_ex::reason(){
-    return detial;
+const std::string &ex_base::description(){
+    return _description;
 }
 
-args_input_ex::args_input_ex(const string &reason)
-    :args_ex ("输入参数错误"){
-    set_detial(reason);
+ex_inputs::ex_inputs(const string &reason)
+    :ex_base ("输入参数错误"){
+    setDescription(reason);
 }
 
-opts_design_ex::opts_design_ex(const string &reason)
-    :args_ex ("选项设计错误"){
-    set_detial(reason);
+ex_design::ex_design(const string &reason)
+    :ex_base ("选项设计错误"){
+    setDescription(reason);
 }
 
-posix::posix(const string &name, const string &detial)
-    :cmd_name(name),cmd_detial(detial)
+posix::posix(const string &name, const string &shortDesc)
+    :cmd_name(name),cmd_detial(shortDesc)
 {}
 
-void posix::reset_description(const string &desc){
+void posix::resetDescription(const string &desc){
     this->cmd_description = desc;
 }
 
-void posix::setShort_opts(const std::initializer_list<ArgsGroup> &list)
+void posix::setShortOptions(const std::initializer_list<ArgsPack> &list)
 {
     for (auto itor=list.begin();itor!=list.end();++itor) {
         auto item = *itor;
         if (item.opt.find("-")==0){
-            throw new opts_design_ex("选项设计错误，夹带“-”标识。option<"+item.opt+">");
+            throw new ex_design("选项设计错误，夹带“-”标识。option<"+item.opt+">");
         }
 
         for (auto ext:short_opts_table) {
             if(item.opt!="" && ext.opt == item.opt){
-                throw new opts_design_ex("选项设计与已知选项重复。option<"+ext.opt+">");
+                throw new ex_design("选项设计与已知选项重复。option<"+ext.opt+">");
             }
         }
 
@@ -56,14 +56,14 @@ void posix::setShort_opts(const std::initializer_list<ArgsGroup> &list)
     }
 }
 
-void posix::args_accept(std::vector<string> argv)
+void posix::argsParse(std::vector<std::string> &argv)
 {
     unsigned long argc = argv.size();
     for (unsigned long args_i=1; args_i<argc; ++args_i) {
         string item = argv[args_i];
 
         if (item.find("--")==0) {
-            throw new args_input_ex("输入posix选项格式错误，option<"+item+">");
+            throw new ex_inputs("输入posix选项格式错误，option<"+item+">");
         }
 
 
@@ -76,7 +76,7 @@ void posix::args_accept(std::vector<string> argv)
                 auto itor=short_opts_table.begin();
                 for (; itor!=short_opts_table.end(); ++itor) {
                     if ((*itor).opt.find(single_opt)==0){
-                        if ((*itor)._placeholder!="") {
+                        if ((*itor).placeholder!="") {
                             suply_count++;
                         }
 
@@ -84,11 +84,11 @@ void posix::args_accept(std::vector<string> argv)
                     }
                 }
                 if (itor == short_opts_table.end()){
-                    throw new args_input_ex(string("未知参数选项，option<").append(&single_opt) + ">");
+                    throw new ex_inputs(string("未知参数选项，option<").append(&single_opt) + ">");
                 }
 
                 if (suply_count > 1){
-                    throw new args_input_ex("多个补参选项错误结合,option<"+item+">");
+                    throw new ex_inputs("多个补参选项错误结合,option<"+item+">");
                 }else if (suply_count == 1) {
                     if (args_i < argc-1) {
                         string suply_item = argv[args_i+1];
@@ -99,7 +99,7 @@ void posix::args_accept(std::vector<string> argv)
                         }
                     }
 
-                    throw new args_input_ex(string("选项缺少补充参数，option<").append(&single_opt)+">");
+                    throw new ex_inputs(string("选项缺少补充参数，option<").append(&single_opt)+">");
 
                 }else {
                     parse_pairs.push_back(std::make_pair(string(&single_opt,1),""));
@@ -112,7 +112,7 @@ void posix::args_accept(std::vector<string> argv)
     }
 }
 
-string posix::get_option(const std::initializer_list<string> &opts, string &value) const
+const std::string posix::peekOption(const std::initializer_list<string> &opts, string &argument) const
 {
     std::list<std::pair<int,std::pair<string,string>>> args_marks;
 
@@ -141,15 +141,15 @@ string posix::get_option(const std::initializer_list<string> &opts, string &valu
         }
     }
 
-    value = at.second;
+    argument = at.second;
     return at.first;
 }
 
-std::list<string> posix::else_args() {
+const std::list<string>& posix::elseArguments() const {
     return args_left;
 }
 
-string posix::help_doc()
+const std::string posix::helpString()
 {
     string doc_string="NAME:\n";
     doc_string += "\t" + cmd_name + " -- " + cmd_detial + "\n\n";
@@ -162,14 +162,14 @@ string posix::help_doc()
         for (auto itor1=short_opts_table.begin();
              itor1!=short_opts_table.end();
              itor1++) {
-            if ((*itor1).opt!="" && (*itor1)._placeholder=="") {
+            if ((*itor1).opt!="" && (*itor1).placeholder=="") {
                 temp1 += (*itor1).opt;
             }
-            if ((*itor1).opt!="" && (*itor1)._placeholder!="") {
-                temp2 += "[-" + (*itor1).opt + " " + (*itor1)._placeholder + "]";
+            if ((*itor1).opt!="" && (*itor1).placeholder!="") {
+                temp2 += "[-" + (*itor1).opt + " " + (*itor1).placeholder + "]";
             }
-            if ((*itor1).opt=="" && (*itor1)._placeholder!="") {
-                temp2 += "[" + (*itor1)._placeholder + "] ";
+            if ((*itor1).opt=="" && (*itor1).placeholder!="") {
+                temp2 += "[" + (*itor1).placeholder + "] ";
             }
         }
         temp1 += "] ";
@@ -190,34 +190,34 @@ string posix::help_doc()
         auto item = *itor2;
 
         if (item.opt!="") {
-            doc_string += "\t-" + item.opt + " " + item._placeholder + "\n"
-                                                                       "\t\t" + item.cmt + "\n\n";
+            doc_string += "\t-" + item.opt + " " + item.placeholder + "\n"
+                                                                      "\t\t" + item.cmt + "\n\n";
         }
-        if (item.opt=="" && item._placeholder!="") {
-            doc_string += "\t" + item._placeholder + "\n"
-                                                     "\t\t" + item.cmt + "\n\n";
+        if (item.opt=="" && item.placeholder!="") {
+            doc_string += "\t" + item.placeholder + "\n"
+                                                    "\t\t" + item.cmt + "\n\n";
         }
     }
 
     return doc_string;
 }
 
-string posix::get_name() const
+const std::string &posix::getName() const
 {
     return cmd_name;
 }
 
-string posix::get_detial() const
+const std::string &posix::getShortDescription() const
 {
     return cmd_detial;
 }
 
-string posix::get_description() const
+const string& posix::getDescription() const
 {
     return cmd_description;
 }
 
-std::list<ArgsGroup> posix::getShort_opts() const
+const std::list<ArgsPack> &posix::getShortOptions() const
 {
     return short_opts_table;
 }
@@ -226,20 +226,20 @@ std::list<ArgsGroup> posix::getShort_opts() const
 gnu::gnu(const string &name, const string &detail)
     :posix (name, detail){}
 
-void gnu::setLong_opts(const std::initializer_list<ArgsGroup> &list){
+void gnu::setLongOptions(const std::initializer_list<ArgsPack> &list){
     for (auto it=list.begin(); it!=list.end(); ++it) {
         auto item = *it;
         if(item.opt.find("--")==0) {
-            throw new opts_design_ex("选项参数自带--，option<"+item.opt+">");
+            throw new ex_design("选项参数自带--，option<"+item.opt+">");
         }
 
         if (item.opt.size() <=3) {
-            throw new opts_design_ex("选项参数长度应该大于1，option<"+item.opt+">");
+            throw new ex_design("选项参数长度应该大于1，option<"+item.opt+">");
         }
 
         for (auto itor2=long_opts_table.begin(); itor2!=long_opts_table.end(); ++itor2) {
             if (item.opt!="" && (*itor2).opt==item.opt) {
-                throw new opts_design_ex("选项参数与已知重复，option<"+item.opt+">");
+                throw new ex_design("选项参数与已知重复，option<"+item.opt+">");
             }
         }
 
@@ -247,11 +247,11 @@ void gnu::setLong_opts(const std::initializer_list<ArgsGroup> &list){
     }
 }
 
-std::list<ArgsGroup> gnu::getLong_opts() const {
+const std::list<ArgsPack> &gnu::getLongOptions() const {
     return long_opts_table;
 }
 
-void gnu::args_accept(std::vector<string> argv)
+void gnu::argsParse(std::vector<string>& argv)
 {
     for (auto item : argv) {
         original_args.push_back(item);
@@ -261,27 +261,30 @@ void gnu::args_accept(std::vector<string> argv)
     for (auto args_itor=argv.begin(); args_itor!=argv.end(); args_itor++) {
         if ((*args_itor).find("--")==0) {
             if((*args_itor).size()<=3){
-                throw new args_input_ex("选项长度过短，option<"+*args_itor+">");
+                throw new ex_inputs("选项长度过短，option<"+*args_itor+">");
             }
             to_be_remove.push_back(*args_itor);
 
-            auto one = args_itor->substr(2);
-            string temp="";
+            auto one = args_itor->substr(2);// options选项
+            // 参数格式为参数联合格式
+            string temp="";                 // 附加参数
             if (one.find("=")!=string::npos) {
                 temp = one.substr(one.find("=")+1);
                 one = one.substr(0, one.size()-temp.size()-1);
 
                 if (temp.size()<1) {
-                    throw new args_input_ex("遗漏必要附加参数，option<"+one+">");
+                    throw new ex_inputs("遗漏必要附加参数，option<"+one+">");
                 }
             }
 
+            // gnu选项参数解析
             auto opts_itor=long_opts_table.begin();
             for (;opts_itor!=long_opts_table.end(); ++opts_itor) {
                 if (one==opts_itor->opt) {
-                    if (opts_itor->_placeholder=="") {
+                    //是否需要附加参数
+                    if (opts_itor->placeholder=="") {
                         if (temp!=""){
-                            throw new args_input_ex("该选项不应携带参数，option<"+one+">");
+                            throw new ex_inputs("该选项不应携带参数，option<"+one+">");
                         }
 
                         this->parse_pairs.push_back(std::make_pair(one,""));
@@ -293,7 +296,7 @@ void gnu::args_accept(std::vector<string> argv)
                         else {
                             auto value = args_itor+1;
                             if (value->find("-")==0 || value==argv.end()){
-                                throw new args_input_ex("选项未提供附加参数，option<"+*args_itor+">");
+                                throw new ex_inputs("选项未提供附加参数，option<"+*args_itor+">");
                             }
                             else {
                                 this->parse_pairs.push_back(std::make_pair(one,*value));
@@ -308,7 +311,7 @@ void gnu::args_accept(std::vector<string> argv)
             }
 
             if (opts_itor == long_opts_table.end()) {
-                throw new args_input_ex("未知命令选项，option<"+one+">");
+                throw new ex_inputs("未知命令选项，option<"+one+">");
             }
         }
     }
@@ -322,10 +325,10 @@ void gnu::args_accept(std::vector<string> argv)
         }
     }
 
-    posix::args_accept(argv);
+    posix::argsParse(argv);
 }
 
-string gnu::get_option(const std::initializer_list<string> &opts, string &value) const{
+const std::string gnu::peekOption(const std::initializer_list<string> &opts, string &value) const{
     std::list<std::pair<int,string>> indices;
 
     for (auto opts_itor=opts.begin(); opts_itor!=opts.end(); ++opts_itor) {
@@ -349,7 +352,7 @@ string gnu::get_option(const std::initializer_list<string> &opts, string &value)
         }
 
 
-        string value="",key = posix::get_option({*opts_itor}, value);
+        string value="",key = posix::peekOption({*opts_itor}, value);
         if (key == *opts_itor) {
             int args_index=0;
             auto args_itor = original_args.begin();
@@ -374,7 +377,7 @@ string gnu::get_option(const std::initializer_list<string> &opts, string &value)
         }
     }
 
-    if (key==posix::get_option({key}, value))
+    if (key==posix::peekOption({key}, value))
         return key;
     else {
         auto parse_item = parse_pairs.begin();
@@ -389,52 +392,60 @@ string gnu::get_option(const std::initializer_list<string> &opts, string &value)
     }
 }
 
-string gnu::help_doc(){
+const std::string gnu::helpString(){
     string doc="NAME:\n";
-    doc += "\t"+get_name() + " -- " + get_detial() + "\n\n";
+    doc += "\t"+getName() + " -- " + getShortDescription() + "\n\n";
 
 
     doc += "USAGE:\n";
-    doc += "\t" + get_name() + " ";
+    doc += "\t" + getName() + " ";
     string temp1="[-", temp2="", short_options="", long_options="";
 
-    auto short_opts = getShort_opts();
+    auto short_opts = getShortOptions();
     for (auto itor=short_opts.begin(); itor!=short_opts.end(); ++itor) {
-        if (itor->opt!="" && itor->_placeholder==""){
+        if(itor->opt == "")
+            continue;
+
+        if (itor->placeholder==""){
             temp1 += itor->opt;
             short_options += "\t-" + itor->opt + "\n" +
                              "\t\t" + itor->cmt + "\n\n";
+            continue;
         }
-        else if (itor->opt!=""){
-            temp2 += "[-" + itor->opt + " " + itor->_placeholder + "] ";
-            short_options += "\t-" + itor->opt + " " + itor->_placeholder +"\n" +
-                             "\t\t" + itor->cmt + "\n\n";
-        }
-        else{
-            temp2 += "[" + itor->_placeholder + "] ";
-            short_options += "\t" + itor->_placeholder + "\n" +
-                             "\t\t" + itor->cmt + "\n\n";
-        }
+
+        temp2 += "[-" + itor->opt + " " + itor->placeholder + "] ";
+        short_options += "\t-" + itor->opt + " " + itor->placeholder +"\n" +
+                         "\t\t" + itor->cmt + "\n\n";
+
     }
     temp1 += "] ";
 
     for (auto itor=long_opts_table.begin(); itor!=long_opts_table.end(); ++itor) {
-        if (itor->_placeholder==""){
+        if (itor->placeholder==""){
             temp2 += "[--"+itor->opt + "] ";
             long_options += "\t--" + itor->opt + "\n" +
                             "\t\t" + itor->cmt + "\n\n";
         }
         else{
-            temp2 += "[--"+itor->opt + " " + itor->_placeholder + "] ";
-            long_options += "\t--" + itor->opt + " " + itor->_placeholder + "\n" +
+            temp2 += "[--"+itor->opt + " " + itor->placeholder + "] ";
+            long_options += "\t--" + itor->opt + " " + itor->placeholder + "\n" +
                             "\t\t" + itor->cmt + "\n\n";
         }
     }
+
+    for(auto itor=short_opts.cbegin(); itor != short_opts.cend(); ++itor){
+        if (itor->opt==""){
+            temp2 += "[" + itor->placeholder + "] ";
+            short_options += "\t" + itor->placeholder + "\n" +
+                             "\t\t" + itor->cmt + "\n\n";
+        }
+    }
+
     doc += temp1 + temp2 + "\n\n";
 
 
     doc += "DESCRIPTION:\n";
-    doc += "\t" + (get_description()==""?"NONE.":get_description()) + "\n\n";
+    doc += "\t" + (getDescription()==""?"NONE.":getDescription()) + "\n\n";
 
 
     doc += "OPTIONS:\n";
@@ -456,9 +467,9 @@ void args_extra::args_check_print(posix &tool, int argc, char *argv[]){
     }
 
     try {
-        tool.args_accept(args);
-    } catch (args_ex* e) {
-        std::cout<< e->type() << "::" << e->reason() << std::endl;
+        tool.argsParse(args);
+    } catch (ex_base* e) {
+        std::cout<< e->type() << "::" << e->description() << std::endl;
         exit(0);
     }
 }

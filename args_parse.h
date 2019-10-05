@@ -14,41 +14,44 @@ namespace args_extra {
      * opt可以不填，表示操作数占位，获取此操作数位置相关
      */
     typedef struct {
-        std::string opt;                    // 开关指令
-        std::string _placeholder;           // 补充参数
-        std::string cmt;                    // 开关解释
-    } ArgsGroup;
+        std::string opt;                    // 开关选项
+        std::string placeholder;           // 补充参数
+        std::string cmt;                    // 选项解释
+    } ArgsPack;
 
 
 
-    class args_ex : public std::exception
+    /**
+     * @brief 解析过程异常
+     */
+    class ex_base : public std::exception
     {
     public:
-        explicit args_ex(const std::string &type);
-        virtual ~args_ex() = default;
+        explicit ex_base(const std::string &type);
+        virtual ~ex_base() = default;
 
-        std::string type();
+        const std::string &type();
 
-        virtual void set_detial(const std::string& reason);
-        virtual std::string reason();
+        virtual void setDescription(const std::string& description);
+        virtual const std::string& description();
 
     private:
-        const std::string indicator;
-        std::string detial;
+        const std::string _type;
+        std::string _description;
     };
 
-    class args_input_ex : public args_ex
+    class ex_inputs : public ex_base
     {
     public:
-        explicit args_input_ex(const std::string &reason);
-        virtual ~args_input_ex() = default;
+        explicit ex_inputs(const std::string &description);
+        virtual ~ex_inputs() = default;
     };
 
-    class opts_design_ex : public args_ex
+    class ex_design : public ex_base
     {
     public:
-        explicit opts_design_ex(const std::string &reason);
-        virtual ~opts_design_ex() = default;
+        explicit ex_design(const std::string &description);
+        virtual ~ex_design() = default;
     };
 
     /**
@@ -60,27 +63,39 @@ namespace args_extra {
         /**
          * @brief 新建处理工具，传入命令名称和相应解释
          * @param name 命令名称
-         * @param detial 命令简略解释
+         * @param shortDesc 简短的命令介绍
          */
-        posix(const std::string &name, const std::string &detial);
+        posix(const std::string &name, const std::string &shortDesc);
         virtual ~posix() = default;
 
-        std::string get_name() const;
-        std::string get_detial() const;
+        /**
+         * @brief 获取命令名称
+         * @return 命令名称
+         */
+        const std::string& getName() const;
+        /**
+         * @brief 获取命令简介
+         * @return 命令简介
+         */
+        const std::string& getShortDescription() const;
 
         /**
          * @brief 设置命令的详细解释
          * @param desc 解释信息
          */
-        void reset_description(const std::string &desc);
-        std::string get_description() const;
+        void resetDescription(const std::string &desc);
+        const std::string& getDescription() const;
 
         /**
-         * @brief 设置命令的开关参数
+         * @brief 设置命令的选项参数
          * @param list
          */
-        void setShort_opts(const std::initializer_list<ArgsGroup> &list);
-        std::list<ArgsGroup> getShort_opts() const;
+        void setShortOptions(const std::initializer_list<ArgsPack> &list);
+        /**
+         * @brief 获取内部设定的选项参数
+         * @return 参数表
+         */
+        const std::list<ArgsPack>& getShortOptions() const;
 
 
         /**
@@ -88,7 +103,7 @@ namespace args_extra {
          * @param argc 参数数量
          * @param argv 参数buffer
          */
-        virtual void args_accept(std::vector<std::string> argv);
+        virtual void argsParse(std::vector<std::string>& argv);
 
         /**
          * @brief 检测输入参数，同时获取key-value参数
@@ -96,18 +111,25 @@ namespace args_extra {
          * @param value 输出key配对的参数
          * @return 参数包含指定key且起作用，返回key，否则为空
          */
-        virtual std::string get_option(const std::initializer_list<std::string> &opts,
-                                       std::string &value) const;
+        virtual const std::string peekOption(const std::initializer_list<std::string> &opts, std::string &argument) const;
 
-        virtual std::list<std::string> else_args();
+        /**
+         * @brief 解析出来的剩余参数
+         * @return 其他参数列表
+         */
+        virtual const std::list<std::string>& elseArguments() const;
 
-        virtual std::string help_doc();
+        /**
+         * @brief 获取自动生成的帮助文档
+         * @return helpString
+         */
+        virtual const std::string helpString();
 
     private:
         const std::string cmd_name;
         const std::string cmd_detial;
         std::string cmd_description;
-        std::list<ArgsGroup> short_opts_table;
+        std::list<ArgsPack> short_opts_table;
 
         std::list<std::pair<std::string,std::string>> parse_pairs;
         std::list<std::string> args_left;
@@ -119,21 +141,21 @@ namespace args_extra {
         gnu(const std::string &name, const std::string &detail);
         virtual ~gnu() override = default;
 
-        void setLong_opts(const std::initializer_list<ArgsGroup> &list);
-        std::list<ArgsGroup> getLong_opts() const;
+        void setLongOptions(const std::initializer_list<ArgsPack> &list);
+        const std::list<ArgsPack>& getLongOptions() const;
 
         /**
          * @brief 处理gnu类型参数
          * @param argc 参数数量
          * @param argv 参数buffer
          */
-        virtual void args_accept(std::vector<std::string> argv) override;
+        virtual void argsParse(std::vector<std::string>& argv) override;
 
-        std::string get_option(const std::initializer_list<std::string> &opts, std::string &value) const override;
-        std::string help_doc() override;
+        const std::string peekOption(const std::initializer_list<std::string> &opts, std::string &value) const override;
+        const std::string helpString() override;
 
     private:
-        std::list<ArgsGroup> long_opts_table;
+        std::list<ArgsPack> long_opts_table;
         std::list<std::string> original_args;
 
         std::list<std::pair<std::string,std::string>> parse_pairs;
