@@ -87,8 +87,8 @@ namespace args_extra {
         const std::string& getDescription() const;
 
         /**
-         * @brief 设置命令的选项参数
-         * @param list
+         * @brief 设置短格式命令选项，可以设置携带参数选项、不携带参数选项、无选项纯参数三种格式
+         * @param list 详细格式列表
          */
         void setShortOptions(const std::initializer_list<ArgsPack> &list);
         /**
@@ -132,7 +132,7 @@ namespace args_extra {
         std::list<ArgsPack> short_opts_table;
 
         std::list<std::pair<std::string,std::string>> parse_pairs;
-        std::list<std::string> args_left;
+        std::list<std::string> args_lift;
     };
 
     class gnu : public posix
@@ -141,6 +141,10 @@ namespace args_extra {
         gnu(const std::string &name, const std::string &detail);
         virtual ~gnu() override = default;
 
+        /**
+         * @brief 设置长格式选项，可以设置待参数选项、不带参数选项
+         * @param list 参数列表
+         */
         void setLongOptions(const std::initializer_list<ArgsPack> &list);
         const std::list<ArgsPack>& getLongOptions() const;
 

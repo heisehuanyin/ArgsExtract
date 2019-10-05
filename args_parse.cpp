@@ -46,6 +46,10 @@ void posix::setShortOptions(const std::initializer_list<ArgsPack> &list)
             throw new ex_design("选项设计错误，夹带“-”标识。option<"+item.opt+">");
         }
 
+        if(item.opt.size() > 1){
+            throw new ex_design("选项设计错误，短选项只能为一位字母或数字。option<"+item.opt+">");
+        }
+
         for (auto ext:short_opts_table) {
             if(item.opt!="" && ext.opt == item.opt){
                 throw new ex_design("选项设计与已知选项重复。option<"+ext.opt+">");
@@ -107,7 +111,7 @@ void posix::argsParse(std::vector<std::string> &argv)
             }
         }
         else {
-            args_left.push_back(item);
+            args_lift.push_back(item);
         }
     }
 }
@@ -146,7 +150,7 @@ const std::string posix::peekOption(const std::initializer_list<string> &opts, s
 }
 
 const std::list<string>& posix::elseArguments() const {
-    return args_left;
+    return args_lift;
 }
 
 const std::string posix::helpString()
@@ -233,7 +237,7 @@ void gnu::setLongOptions(const std::initializer_list<ArgsPack> &list){
             throw new ex_design("选项参数自带--，option<"+item.opt+">");
         }
 
-        if (item.opt.size() <=3) {
+        if (item.opt.size() <2) {
             throw new ex_design("选项参数长度应该大于1，option<"+item.opt+">");
         }
 
@@ -399,7 +403,7 @@ const std::string gnu::helpString(){
 
     doc += "USAGE:\n";
     doc += "\t" + getName() + " ";
-    string temp1="[-", temp2="", short_options="", long_options="";
+    string temp1="[-", temp2="", options_details="";
 
     auto short_opts = getShortOptions();
     for (auto itor=short_opts.begin(); itor!=short_opts.end(); ++itor) {
@@ -408,13 +412,13 @@ const std::string gnu::helpString(){
 
         if (itor->placeholder==""){
             temp1 += itor->opt;
-            short_options += "\t-" + itor->opt + "\n" +
+            options_details += "\t-" + itor->opt + "\n" +
                              "\t\t" + itor->cmt + "\n\n";
             continue;
         }
 
         temp2 += "[-" + itor->opt + " " + itor->placeholder + "] ";
-        short_options += "\t-" + itor->opt + " " + itor->placeholder +"\n" +
+        options_details += "\t-" + itor->opt + " " + itor->placeholder +"\n" +
                          "\t\t" + itor->cmt + "\n\n";
 
     }
@@ -423,12 +427,12 @@ const std::string gnu::helpString(){
     for (auto itor=long_opts_table.begin(); itor!=long_opts_table.end(); ++itor) {
         if (itor->placeholder==""){
             temp2 += "[--"+itor->opt + "] ";
-            long_options += "\t--" + itor->opt + "\n" +
+            options_details += "\t--" + itor->opt + "\n" +
                             "\t\t" + itor->cmt + "\n\n";
         }
         else{
             temp2 += "[--"+itor->opt + " " + itor->placeholder + "] ";
-            long_options += "\t--" + itor->opt + " " + itor->placeholder + "\n" +
+            options_details += "\t--" + itor->opt + " " + itor->placeholder + "\n" +
                             "\t\t" + itor->cmt + "\n\n";
         }
     }
@@ -436,7 +440,7 @@ const std::string gnu::helpString(){
     for(auto itor=short_opts.cbegin(); itor != short_opts.cend(); ++itor){
         if (itor->opt==""){
             temp2 += "[" + itor->placeholder + "] ";
-            short_options += "\t" + itor->placeholder + "\n" +
+            options_details += "\t" + itor->placeholder + "\n" +
                              "\t\t" + itor->cmt + "\n\n";
         }
     }
@@ -449,7 +453,7 @@ const std::string gnu::helpString(){
 
 
     doc += "OPTIONS:\n";
-    doc += short_options + long_options;
+    doc += options_details;
 
     return doc;
 }
