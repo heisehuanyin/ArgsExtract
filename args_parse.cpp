@@ -424,6 +424,10 @@ const std::string gnu::helpString(){
     }
     temp1 += "] ";
 
+    if(short_opts.size()==0){
+        temp1 = "";
+    }
+
     for (auto itor=long_opts_table.begin(); itor!=long_opts_table.end(); ++itor) {
         if (itor->placeholder==""){
             temp2 += "[--"+itor->opt + "] ";
