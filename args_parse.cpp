@@ -8,15 +8,16 @@ using std::string;
 ex_base::ex_base(const string &type)
     :_type(type){}
 
-const std::string &ex_base::type(){
+const std::string ex_base::type(){
     return _type;
 }
 
-void ex_base::setDescription(const string &reason){
+ex_base &ex_base::setDescription(const string &reason){
     this->_description = reason;
+    return *this;
 }
 
-const std::string &ex_base::description(){
+const std::string ex_base::description(){
     return _description;
 }
 
@@ -206,17 +207,17 @@ const std::string posix::helpString()
     return doc_string;
 }
 
-const std::string &posix::getName() const
+const std::string posix::getName() const
 {
     return cmd_name;
 }
 
-const std::string &posix::getShortDescription() const
+const std::string posix::getShortDescription() const
 {
     return cmd_detial;
 }
 
-const string& posix::getDescription() const
+const string posix::getDescription() const
 {
     return cmd_description;
 }

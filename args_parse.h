@@ -15,7 +15,7 @@ namespace args_extra {
      */
     typedef struct {
         std::string opt;                    // 开关选项
-        std::string placeholder;           // 补充参数
+        std::string placeholder;            // 补充参数
         std::string cmt;                    // 选项解释
     } ArgsPack;
 
@@ -30,10 +30,10 @@ namespace args_extra {
         explicit ex_base(const std::string &type);
         virtual ~ex_base() = default;
 
-        const std::string &type();
+        const std::string type();
 
-        virtual void setDescription(const std::string& description);
-        virtual const std::string& description();
+        virtual ex_base& setDescription(const std::string& description);
+        virtual const std::string description();
 
     private:
         const std::string _type;
@@ -72,19 +72,19 @@ namespace args_extra {
          * @brief 获取命令名称
          * @return 命令名称
          */
-        const std::string& getName() const;
+        const std::string getName() const;
         /**
          * @brief 获取命令简介
          * @return 命令简介
          */
-        const std::string& getShortDescription() const;
+        const std::string getShortDescription() const;
 
         /**
          * @brief 设置命令的详细解释
          * @param desc 解释信息
          */
         void resetDescription(const std::string &desc);
-        const std::string& getDescription() const;
+        const std::string getDescription() const;
 
         /**
          * @brief 设置短格式命令选项，可以设置携带参数选项、不携带参数选项、无选项纯参数三种格式
