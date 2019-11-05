@@ -335,6 +335,8 @@ void gnu::argsParse(vector<pair<string, int> > &argv)
                 }
                 if(opt_itor == long_options.cend())
                     throw new ex_inputs("输入未知选项<" + args_itor->first + ">.");
+
+                continue;
             }
         }
 
