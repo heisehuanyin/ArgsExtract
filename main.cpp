@@ -26,12 +26,12 @@ int main(int argc, char* argv[])
 
     auto g=utool.elseArguments();
     for (auto it=g.cbegin();it!=g.cend();++it) {
-        cout << *it << endl;
+        cout << it->first << endl;
     }
 
-    string k,v;
-    k = utool.peekOption({"pppp"},v);
-    std::cout << k << ":" << v << std::endl;
+    string v;
+    auto k = utool.peekOption({"pppp"},v);
+    std::cout << k.first << ":" << v << std::endl;
 
     std::cout << utool.helpString() << endl;
 

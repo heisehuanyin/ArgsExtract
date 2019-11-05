@@ -10,12 +10,12 @@ namespace args_extra {
 
     /**
      * 标准命令参数模板
-     * 需要携带参数的命令，_placeholder必须填写，反之留空("")
+     * 需要携带参数的命令，value_pl必须填写，反之留空("")
      * opt可以不填，表示操作数占位，获取此操作数位置相关
      */
     typedef struct {
         std::string opt;                    // 开关选项
-        std::string placeholder;            // 补充参数
+        std::string value_pl;               // 补充参数
         std::string cmt;                    // 选项解释
     } ArgsPack;
 
@@ -100,24 +100,23 @@ namespace args_extra {
 
         /**
          * @brief 处理posix类型参数
-         * @param argc 参数数量
          * @param argv 参数buffer
          */
-        virtual void argsParse(std::vector<std::string>& argv);
+        virtual void argsParse(std::vector<std::pair<std::string,int>>& argv);
 
         /**
          * @brief 检测输入参数，同时获取key-value参数
          * @param opts 输入keys（互斥参数组），只有最后出现的key起作用
          * @param value 输出key配对的参数
-         * @return 参数包含指定key且起作用，返回key，否则为空
+         * @return 返回真正起作用的key和其命令行index，无则返回 pair<"",-1>
          */
-        virtual const std::string peekOption(const std::initializer_list<std::string> &opts, std::string &argument) const;
+        virtual  std::pair<std::string, int> peekOption(const std::initializer_list<std::string> &opts, std::string &value) const;
 
         /**
          * @brief 解析出来的剩余参数
          * @return 其他参数列表
          */
-        virtual const std::list<std::string>& elseArguments() const;
+        virtual const std::list<std::pair<std::string, int> > &elseArguments() const;
 
         /**
          * @brief 获取自动生成的帮助文档
@@ -129,10 +128,11 @@ namespace args_extra {
         const std::string cmd_name;
         const std::string cmd_detial;
         std::string cmd_description;
-        std::list<ArgsPack> short_opts_table;
+        std::list<ArgsPack> short_options;
 
-        std::list<std::pair<std::string,std::string>> parse_pairs;
-        std::list<std::string> args_lift;
+        //       pair<args-pack:presult, origin-argsitem
+        std::list<std::pair<ArgsPack,std::pair<std::string,int>>> parser_result;
+        std::list<std::pair<std::string,int>> args_lift;
     };
 
     class gnu : public posix
@@ -150,19 +150,19 @@ namespace args_extra {
 
         /**
          * @brief 处理gnu类型参数
-         * @param argc 参数数量
          * @param argv 参数buffer
          */
-        virtual void argsParse(std::vector<std::string>& argv) override;
+        virtual void argsParse(std::vector<std::pair<std::string,int>>& argv) override;
 
-        const std::string peekOption(const std::initializer_list<std::string> &opts, std::string &value) const override;
+        virtual  std::pair<std::string, int>
+        peekOption(const std::initializer_list<std::string> &opts, std::string &value) const override;
+
         const std::string helpString() override;
 
     private:
-        std::list<ArgsPack> long_opts_table;
-        std::list<std::string> original_args;
+        std::list<ArgsPack> long_options;
 
-        std::list<std::pair<std::string,std::string>> parse_pairs;
+        std::list<std::pair<ArgsPack,std::pair<std::string,int>>> parser_result;
     };
 
 
